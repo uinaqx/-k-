@@ -327,6 +327,90 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
             padding-bottom: 10px;
         }
+
+        /* --- Loading Page --- */
+        .loading-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            text-align: center;
+            background: radial-gradient(circle at center, rgba(203,160,81,0.1), rgba(0,0,0,0.9));
+        }
+
+        .loading-title {
+            font-size: 2.4rem;
+            color: var(--gold);
+            letter-spacing: 6px;
+        }
+
+        .loading-subtitle {
+            color: #777;
+            letter-spacing: 4px;
+            font-size: 0.9rem;
+        }
+
+        .loading-evidence {
+            width: 60%;
+            max-width: 720px;
+            min-height: 140px;
+            border: 1px solid rgba(203,160,81,0.3);
+            background: rgba(0,0,0,0.6);
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(203,160,81,0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .loading-evidence-item {
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+            color: #cfcfcf;
+            font-size: 1rem;
+        }
+
+        .loading-evidence-item.active {
+            opacity: 1;
+            transform: translateY(0);
+            color: var(--gold-light);
+        }
+
+        .trend-preview {
+            width: 60%;
+            max-width: 720px;
+            border: 1px solid rgba(203,160,81,0.2);
+            padding: 18px 24px;
+            background: rgba(15,15,15,0.7);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .trend-line {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 80px;
+        }
+
+        .trend-segment {
+            flex: 1;
+            background: linear-gradient(180deg, rgba(203,160,81,0.85), rgba(203,160,81,0.15));
+            border-radius: 6px 6px 0 0;
+            transition: height 0.6s ease;
+        }
+
+        .trend-labels {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 0.8rem;
+        }
     </style>
 </head>
 <body>
@@ -378,6 +462,34 @@
     </div>
 
     <div id="page3" class="page">
+        <div class="loading-container">
+            <div>
+                <div class="loading-title">推演中</div>
+                <div class="loading-subtitle">DESTINY LOADING</div>
+            </div>
+            <div class="loading-evidence" id="loadingEvidence"></div>
+            <div class="trend-preview">
+                <div style="color: var(--gold); font-size: 0.95rem; letter-spacing: 2px;">即将生成的K线趋势预判</div>
+                <div class="trend-line">
+                    <div class="trend-segment" style="height: 35%;"></div>
+                    <div class="trend-segment" style="height: 55%;"></div>
+                    <div class="trend-segment" style="height: 90%;"></div>
+                    <div class="trend-segment" style="height: 70%;"></div>
+                    <div class="trend-segment" style="height: 62%;"></div>
+                </div>
+                <div class="trend-labels">
+                    <span>少年积势</span>
+                    <span>青年攀升</span>
+                    <span>中年峰值</span>
+                    <span>50后回落</span>
+                    <span>晚年平稳</span>
+                </div>
+            </div>
+            <div style="color:#555; font-size:0.85rem;">资料校验完成后将自动呈现完整K线</div>
+        </div>
+    </div>
+
+    <div id="page4" class="page">
         <div class="chart-wrapper">
             <div class="chart-header">
                 <div>
@@ -525,6 +637,9 @@
         /* --- Page 3 & Chart Logic --- */
         let globalChartData = null; // 存储当前生成的数据用于评价
 
+        let loadingTimer = null;
+        let loadingInterval = null;
+
         function generateChart() {
             const name = document.getElementById('nameInput').value;
             if (!name || !selectedData.year || !selectedData.month || !selectedData.day || !selectedData.gender) {
@@ -532,14 +647,53 @@
                 return;
             }
 
-            goToPage(3);
             document.getElementById('resName').innerText = name;
             document.getElementById('resInfo').innerText = `${selectedData.gender} | ${selectedData.year}年${selectedData.month}月${selectedData.day}日生 | 命主元神`;
 
-            initKlineChart(name);
+            startLoadingSequence();
         }
 
-        function initKlineChart(name) {
+        function startLoadingSequence() {
+            const evidenceItems = [
+                "调取紫微斗数主星排布",
+                "校正真太阳时与天干地支",
+                "检索量化金融波动模型",
+                "比对生命周期理论曲线",
+                "合并大运流年与飞星走势",
+                "推演中年峰值与晚年平衡"
+            ];
+
+            const evidenceContainer = document.getElementById('loadingEvidence');
+            evidenceContainer.innerHTML = '';
+            evidenceItems.forEach((text) => {
+                const item = document.createElement('div');
+                item.className = 'loading-evidence-item';
+                item.innerText = text;
+                evidenceContainer.appendChild(item);
+            });
+
+            goToPage(3);
+
+            let index = 0;
+            if (loadingInterval) clearInterval(loadingInterval);
+            loadingInterval = setInterval(() => {
+                const items = evidenceContainer.querySelectorAll('.loading-evidence-item');
+                if (index < items.length) {
+                    items[index].classList.add('active');
+                    index += 1;
+                } else {
+                    clearInterval(loadingInterval);
+                }
+            }, 700);
+
+            if (loadingTimer) clearTimeout(loadingTimer);
+            loadingTimer = setTimeout(() => {
+                goToPage(4);
+                initKlineChart();
+            }, 5000);
+        }
+
+        function initKlineChart() {
             const chartDom = document.getElementById('kline');
             const myChart = echarts.init(chartDom);
             
@@ -754,10 +908,11 @@
 
             const segments = [
                 { start: 0, end: 18, drift: -0.2, volatility: 2.6, eventBoost: -2.5 },
-                { start: 19, end: 35, drift: 0.8, volatility: 3.2, eventBoost: 3.5 },
-                { start: 36, end: 55, drift: 0.15, volatility: 2.4, eventBoost: 0.5 },
-                { start: 56, end: 75, drift: 0.5, volatility: 2.0, eventBoost: 2.8 },
-                { start: 76, end: 100, drift: -0.1, volatility: 1.8, eventBoost: 1.2 }
+                { start: 19, end: 35, drift: 0.9, volatility: 3.1, eventBoost: 3.8 },
+                { start: 36, end: 50, drift: 0.25, volatility: 2.3, eventBoost: 1.2 },
+                { start: 51, end: 60, drift: -0.15, volatility: 1.4, eventBoost: -0.4 },
+                { start: 61, end: 75, drift: 0.1, volatility: 1.6, eventBoost: 0.8 },
+                { start: 76, end: 100, drift: -0.05, volatility: 1.4, eventBoost: 0.5 }
             ];
 
             let segmentIndex = 0;
@@ -778,7 +933,11 @@
 
                 if (i === 28) change += 2.5;
                 if (i === 42) change -= 2.8;
-                if (i === 66) change += 2.2;
+                if (i === 66) change += 1.4;
+
+                if (i >= 50 && i <= 60) {
+                    change = Math.min(change, 0.35) - 0.2;
+                }
 
                 let open = price;
                 let close = price + change;
@@ -795,11 +954,28 @@
                 price = close;
             }
 
+            const peakRange = { start: 28, end: 50 };
+            const peakHigh = Math.max(...highs.slice(peakRange.start, peakRange.end + 1));
+            const peakHighIndex = highs.indexOf(peakHigh);
+
+            highs.forEach((value, idx) => {
+                if (idx < peakRange.start || idx > peakRange.end) {
+                    if (value >= peakHigh) {
+                        highs[idx] = peakHigh - (0.5 + Math.random() * 1.5);
+                        const adjustedHigh = highs[idx];
+                        const row = values[idx].map(Number);
+                        row[3] = adjustedHigh.toFixed(1);
+                        if (row[1] > adjustedHigh) row[1] = (adjustedHigh - 0.3).toFixed(1);
+                        values[idx] = row.map(num => Number(num).toFixed(1));
+                    }
+                }
+            });
+
             const maxRise = Math.max(...changes);
             const maxFall = Math.min(...changes);
             const maxRiseIndex = changes.indexOf(maxRise);
             const maxFallIndex = changes.indexOf(maxFall);
-            const maxHighIndex = highs.indexOf(Math.max(...highs));
+            const maxHighIndex = peakHighIndex;
             const minLowIndex = lows.indexOf(Math.min(...lows));
 
             const usedIndexes = new Set();
