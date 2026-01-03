@@ -638,9 +638,9 @@
                         <div class="input-row">
                             <label class="label">生辰 / BIRTH DATE</label>
                             <div class="date-display">
-                                <div class="date-box" id="yearBox" onclick="openGrid('year')">年份</div>
-                                <div class="date-box" id="monthBox" onclick="openGrid('month')">月份</div>
-                                <div class="date-box" id="dayBox" onclick="openGrid('day')">日期</div>
+                                <div class="date-box" id="yearBox" data-picker="year">年份</div>
+                                <div class="date-box" id="monthBox" data-picker="month">月份</div>
+                                <div class="date-box" id="dayBox" data-picker="day">日期</div>
                             </div>
                         </div>
 
@@ -785,6 +785,16 @@
         /* --- Page 2 Logic --- */
         let selectedData = { gender: '', year: null, month: null, day: null };
         let currentPicking = '';
+        const dateBoxElements = document.querySelectorAll('.date-box');
+        dateBoxElements.forEach((box) => {
+            const type = box.dataset.picker;
+            if (!type) return;
+            box.addEventListener('click', () => openGrid(type));
+            box.addEventListener('touchstart', (event) => {
+                event.preventDefault();
+                openGrid(type);
+            }, { passive: false });
+        });
 
         function selectGender(el, val) {
             document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('selected'));
@@ -980,6 +990,8 @@
 
             let currentIndex = 0;
             const total = data.years.length;
+            const revealDuration = 3000;
+            const intervalMs = Math.max(20, Math.round(revealDuration / total));
 
             const revealTimer = setInterval(() => {
                 currentIndex += 1;
@@ -1014,7 +1026,7 @@
                 if (currentIndex >= total) {
                     clearInterval(revealTimer);
                 }
-            }, 80);
+            }, intervalMs);
         }
 
         /* --- 评价逻辑 --- */
