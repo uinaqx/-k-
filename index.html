@@ -38,6 +38,20 @@
             pointer-events: none;
         }
 
+        #fadeOverlay {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            opacity: 0;
+            transition: opacity 1s ease;
+            z-index: 200;
+            pointer-events: none;
+        }
+
+        body.fade-active #fadeOverlay {
+            opacity: 1;
+        }
+
         .page {
             position: absolute;
             top: 0; left: 0;
@@ -51,6 +65,23 @@
         .page.active {
             display: block;
             opacity: 1;
+        }
+
+        .page1-flow {
+            height: 200vh;
+            transition: transform 1.2s ease;
+        }
+
+        .page1-flow.shifted {
+            transform: translateY(-100vh);
+        }
+
+        .page1-hero {
+            height: 100vh;
+        }
+
+        .page1-form {
+            height: 100vh;
         }
 
         /* --- Page 1: 3D 斜向圆环 --- */
@@ -402,7 +433,16 @@
             flex: 1;
             background: linear-gradient(180deg, rgba(203,160,81,0.85), rgba(203,160,81,0.15));
             border-radius: 6px 6px 0 0;
-            transition: height 0.6s ease;
+            opacity: 0;
+            height: 0;
+            transform: translateY(12px);
+            transition: height 1.2s ease, opacity 1.2s ease, transform 1.2s ease;
+        }
+
+        .trend-segment.visible {
+            opacity: 1;
+            height: var(--target-height);
+            transform: translateY(0);
         }
 
         .trend-labels {
@@ -416,48 +456,52 @@
 <body>
 
     <div id="particles-js"></div>
+    <div id="fadeOverlay"></div>
 
     <div id="page1" class="page active">
-        <div id="scene">
-            <div class="ring-container" id="ring"></div>
-            <div class="center-overlay">
-                <h1 class="main-title">人生K线</h1>
-                <p style="letter-spacing: 5px; color: #888; font-size: 0.8rem; margin-bottom: 30px;">THE ALGORITHM OF DESTINY</p>
-                <button class="enter-btn" onclick="goToPage(2)">洞悉天机</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="page2" class="page">
-        <div class="input-container">
-            <div class="form-box">
-                <h2 style="color:var(--gold); margin-bottom:40px; font-weight:lighter;">录入命盘信息</h2>
-                
-                <div class="input-row">
-                    <label class="label">姓名 / NAME</label>
-                    <input type="text" id="nameInput" class="custom-input" placeholder="请输入您的姓名" autocomplete="off">
-                </div>
-
-                <div class="input-row">
-                    <label class="label">性别 / GENDER</label>
-                    <div class="gender-options">
-                        <div class="gender-btn" onclick="selectGender(this, '乾造 (男)')">乾造 (男)</div>
-                        <div class="gender-btn" onclick="selectGender(this, '坤造 (女)')">坤造 (女)</div>
+        <div class="page1-flow" id="page1Flow">
+            <section class="page1-hero">
+                <div id="scene">
+                    <div class="ring-container" id="ring"></div>
+                    <div class="center-overlay">
+                        <h1 class="main-title">人生K线</h1>
+                        <p style="letter-spacing: 5px; color: #888; font-size: 0.8rem; margin-bottom: 30px;">THE ALGORITHM OF DESTINY</p>
+                        <button class="enter-btn" onclick="revealForm()">洞悉天机</button>
                     </div>
                 </div>
+            </section>
+            <section class="page1-form">
+                <div class="input-container">
+                    <div class="form-box">
+                        <h2 style="color:var(--gold); margin-bottom:40px; font-weight:lighter;">录入命盘信息</h2>
 
-                <div class="input-row">
-                    <label class="label">生辰 / BIRTH DATE</label>
-                    <div class="date-display">
-                        <div class="date-box" id="yearBox" onclick="openGrid('year')">年份</div>
-                        <div class="date-box" id="monthBox" onclick="openGrid('month')">月份</div>
-                        <div class="date-box" id="dayBox" onclick="openGrid('day')">日期</div>
+                        <div class="input-row">
+                            <label class="label">姓名 / NAME</label>
+                            <input type="text" id="nameInput" class="custom-input" placeholder="请输入您的姓名" autocomplete="off">
+                        </div>
+
+                        <div class="input-row">
+                            <label class="label">性别 / GENDER</label>
+                            <div class="gender-options">
+                                <div class="gender-btn" onclick="selectGender(this, '乾造 (男)')">乾造 (男)</div>
+                                <div class="gender-btn" onclick="selectGender(this, '坤造 (女)')">坤造 (女)</div>
+                            </div>
+                        </div>
+
+                        <div class="input-row">
+                            <label class="label">生辰 / BIRTH DATE</label>
+                            <div class="date-display">
+                                <div class="date-box" id="yearBox" onclick="openGrid('year')">年份</div>
+                                <div class="date-box" id="monthBox" onclick="openGrid('month')">月份</div>
+                                <div class="date-box" id="dayBox" onclick="openGrid('day')">日期</div>
+                            </div>
+                        </div>
+
+                        <button class="enter-btn" style="width:100%; padding: 12px; margin-top:20px;" onclick="generateChart()">开始推演</button>
+                        <div style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:#666;" onclick="returnHome()">返回首页</div>
                     </div>
                 </div>
-
-                <button class="enter-btn" style="width:100%; padding: 12px; margin-top:20px;" onclick="generateChart()">开始推演</button>
-                <div style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:#666;" onclick="goToPage(1)">返回首页</div>
-            </div>
+            </section>
         </div>
     </div>
 
@@ -471,11 +515,11 @@
             <div class="trend-preview">
                 <div style="color: var(--gold); font-size: 0.95rem; letter-spacing: 2px;">即将生成的K线趋势预判</div>
                 <div class="trend-line">
-                    <div class="trend-segment" style="height: 35%;"></div>
-                    <div class="trend-segment" style="height: 55%;"></div>
-                    <div class="trend-segment" style="height: 90%;"></div>
-                    <div class="trend-segment" style="height: 70%;"></div>
-                    <div class="trend-segment" style="height: 62%;"></div>
+                    <div class="trend-segment" style="--target-height: 35%;"></div>
+                    <div class="trend-segment" style="--target-height: 55%;"></div>
+                    <div class="trend-segment" style="--target-height: 90%;"></div>
+                    <div class="trend-segment" style="--target-height: 70%;"></div>
+                    <div class="trend-segment" style="--target-height: 62%;"></div>
                 </div>
                 <div class="trend-labels">
                     <span>少年积势</span>
@@ -581,6 +625,16 @@
             document.getElementById(`page${n}`).classList.add('active');
         }
 
+        function revealForm() {
+            const flow = document.getElementById('page1Flow');
+            flow.classList.add('shifted');
+        }
+
+        function returnHome() {
+            const flow = document.getElementById('page1Flow');
+            flow.classList.remove('shifted');
+        }
+
         /* --- Page 2 Logic --- */
         let selectedData = { gender: '', year: null, month: null, day: null };
         let currentPicking = '';
@@ -638,7 +692,6 @@
         let globalChartData = null; // 存储当前生成的数据用于评价
 
         let loadingTimer = null;
-        let loadingInterval = null;
 
         function generateChart() {
             const name = document.getElementById('nameInput').value;
@@ -672,25 +725,38 @@
                 evidenceContainer.appendChild(item);
             });
 
-            goToPage(3);
+            const trendSegments = document.querySelectorAll('.trend-segment');
+            trendSegments.forEach(segment => segment.classList.remove('visible'));
 
-            let index = 0;
-            if (loadingInterval) clearInterval(loadingInterval);
-            loadingInterval = setInterval(() => {
-                const items = evidenceContainer.querySelectorAll('.loading-evidence-item');
-                if (index < items.length) {
-                    items[index].classList.add('active');
-                    index += 1;
-                } else {
-                    clearInterval(loadingInterval);
-                }
-            }, 700);
+            document.body.classList.add('fade-active');
+            setTimeout(() => {
+                goToPage(3);
+                document.body.classList.remove('fade-active');
+            }, 900);
+
+            const items = evidenceContainer.querySelectorAll('.loading-evidence-item');
+            items.forEach((item, idx) => {
+                setTimeout(() => item.classList.add('active'), idx * 700);
+            });
+
+            const evidenceDuration = items.length * 700 + 600;
 
             if (loadingTimer) clearTimeout(loadingTimer);
             loadingTimer = setTimeout(() => {
-                goToPage(4);
-                initKlineChart();
-            }, 5000);
+                const previewDuration = startTrendPreview();
+                setTimeout(() => {
+                    goToPage(4);
+                    initKlineChart();
+                }, previewDuration);
+            }, evidenceDuration);
+        }
+
+        function startTrendPreview() {
+            const segments = document.querySelectorAll('.trend-segment');
+            segments.forEach((segment, idx) => {
+                setTimeout(() => segment.classList.add('visible'), idx * 800);
+            });
+            return segments.length * 800 + 1200;
         }
 
         function initKlineChart() {
@@ -756,19 +822,52 @@
                 ]
             };
 
-            option.graphic = data.texts.map(t => ({
-                type: 'text',
-                left: t.x,
-                top: t.y,
-                style: {
-                    text: t.text,
-                    fill: '#cba051',
-                    font: '14px "Songti SC"'
-                }
-            }));
+            option.xAxis.data = [];
+            option.series[0].data = [];
+            option.series[0].markPoint.data = [];
+            option.series[1].data = [];
+            option.graphic = [];
 
             myChart.setOption(option);
             window.addEventListener('resize', () => myChart.resize());
+
+            let currentIndex = 0;
+            const total = data.years.length;
+
+            const revealTimer = setInterval(() => {
+                currentIndex += 1;
+                const yearsSlice = data.years.slice(0, currentIndex);
+                const valuesSlice = data.values.slice(0, currentIndex);
+                const annotationsSlice = data.annotations.filter(item => item.coord[0] < currentIndex);
+                const textsSlice = data.texts.filter(item => item.index < currentIndex);
+
+                myChart.setOption({
+                    xAxis: { data: yearsSlice },
+                    series: [
+                        {
+                            data: valuesSlice,
+                            markPoint: { data: annotationsSlice }
+                        },
+                        {
+                            data: calculateMA(10, valuesSlice)
+                        }
+                    ],
+                    graphic: textsSlice.map(t => ({
+                        type: 'text',
+                        left: t.x,
+                        top: t.y,
+                        style: {
+                            text: t.text,
+                            fill: '#cba051',
+                            font: '14px "Songti SC"'
+                        }
+                    }))
+                });
+
+                if (currentIndex >= total) {
+                    clearInterval(revealTimer);
+                }
+            }, 80);
         }
 
         /* --- 评价逻辑 --- */
@@ -1007,7 +1106,7 @@
             annotations.slice(0, 3).forEach((item) => {
                 const index = item.coord[0];
                 const y = ['回撤', '探底'].includes(item.name) ? '78%' : '18%';
-                texts.push({ text: `${index}岁：${item.name}`, x: `${index}%`, y });
+                texts.push({ text: `${index}岁：${item.name}`, x: `${index}%`, y, index });
             });
 
             return { years, values, annotations, texts };
