@@ -152,7 +152,7 @@
             justify-content: center;
             height: 100%;
             /* 修改点：去除纯色背景，使用半透明以便透出粒子 */
-            background: rgba(0, 0, 0, 0.7); 
+            background: rgba(0, 0, 0, 0.55); 
             backdrop-filter: blur(5px);
         }
 
@@ -286,7 +286,6 @@
             padding: 40px;
             background: #000;
             border: 2px solid var(--gold);
-            box-shadow: 0 0 50px rgba(203, 160, 81, 0.3);
             text-align: center;
             position: relative;
         }
@@ -635,63 +634,112 @@
             // 解析数据
             // values数组元素: [open, close, low, high]
             const values = data.values;
-            let maxRise = 0, maxRiseAge = 0;
-            let maxFall = 0, maxFallAge = 0;
+            let maxRise = -Infinity;
+            let maxRiseAge = 0;
+            let maxFall = Infinity;
+            let maxFallAge = 0;
             let startPrice = parseFloat(values[0][0]);
             let endPrice = parseFloat(values[values.length - 1][1]);
-            let maxPrice = 0, maxPriceAge = 0;
+            let maxPrice = -Infinity;
+            let maxPriceAge = 0;
+            let minPrice = Infinity;
+            let minPriceAge = 0;
+            let sumVolatility = 0;
 
             // 寻找关键节点
             for (let i = 0; i < values.length; i++) {
                 let open = parseFloat(values[i][0]);
                 let close = parseFloat(values[i][1]);
                 let high = parseFloat(values[i][3]);
-                
+                let low = parseFloat(values[i][2]);
                 let change = close - open;
+
+                sumVolatility += Math.abs(change);
                 if (change > maxRise) { maxRise = change; maxRiseAge = i; }
                 if (change < maxFall) { maxFall = change; maxFallAge = i; }
                 if (high > maxPrice) { maxPrice = high; maxPriceAge = i; }
+                if (low < minPrice) { minPrice = low; minPriceAge = i; }
             }
 
-            // 生成评价词
-            let summary = "";
-            let detail = "";
+            const totalChange = endPrice - startPrice;
+            const avgVolatility = sumVolatility / values.length;
+            const earlyPrice = parseFloat(values[30][1] || values[values.length - 1][1]);
+            const midPrice = parseFloat(values[60][1] || values[values.length - 1][1]);
+            const latePrice = parseFloat(values[80][1] || values[values.length - 1][1]);
 
-            // 逻辑树
-            if (endPrice > startPrice + 30) {
-                summary = "青云直上，大器晚成";
-            } else if (endPrice < startPrice - 20) {
-                summary = "繁华落尽，归于平淡";
-            } else if (maxRise > 10 && maxFall < -10) {
-                summary = "跌宕起伏，波澜壮阔";
-            } else {
-                summary = "稳中求进，福寿安康";
-            }
+            const context = {
+                totalChange,
+                avgVolatility,
+                maxRise,
+                maxFall,
+                maxRiseAge,
+                maxFallAge,
+                maxPriceAge,
+                minPriceAge,
+                startPrice,
+                endPrice,
+                earlyPrice,
+                midPrice,
+                latePrice
+            };
 
-            // 生成具体解析
-            detail = `纵观一生，运势${endPrice > startPrice ? '总体向上' : '起伏不定'}。`;
-            
-            if (maxRiseAge > 0) {
-                detail += `机缘在${maxRiseAge}岁时显现，运势陡升。`;
-            }
-            
-            if (maxFallAge > 0) {
-                detail += `需留意${maxFallAge}岁时的坎坷，`;
-                if (maxFallAge < maxRiseAge) {
-                    detail += `好在渡劫之后必有后福。`;
-                } else {
-                    detail += `宜韬光养晦，守成即可。`;
+            const profiles = [
+                {
+                    summary: "大起大落",
+                    match: ctx => ctx.maxRise > 9 && ctx.maxFall < -9 && ctx.avgVolatility > 4,
+                    detail: ctx => `运势峰谷分明，${ctx.maxRiseAge}岁迎来冲天之势，${ctx.maxFallAge}岁亦有波折。起落之间见真章，能在震荡中磨砺心性。`
+                },
+                {
+                    summary: "一路高歌",
+                    match: ctx => ctx.totalChange > 25 && ctx.maxFall > -6,
+                    detail: ctx => `整体走势昂扬，${ctx.maxRiseAge}岁出现关键跃升，后续波折不大，属于顺势而上的好运之局。`
+                },
+                {
+                    summary: "高开低走",
+                    match: ctx => ctx.maxPriceAge < 35 && ctx.totalChange < -12,
+                    detail: ctx => `早年锋芒毕露，却在中后期走弱。${ctx.maxPriceAge}岁巅峰之后需懂得守势，方能以静制动。`
+                },
+                {
+                    summary: "先抑后扬",
+                    match: ctx => ctx.minPriceAge < 40 && ctx.totalChange > 10,
+                    detail: ctx => `前期阻滞难免，${ctx.minPriceAge}岁触底蓄势，后续逐步回升，厚积而终能扬眉。`
+                },
+                {
+                    summary: "峰回路转",
+                    match: ctx => ctx.maxFall < -8 && ctx.endPrice > ctx.startPrice && ctx.maxRiseAge > ctx.maxFallAge,
+                    detail: ctx => `低谷之后转机陡现，${ctx.maxFallAge}岁考验最甚，${ctx.maxRiseAge}岁迎来转折，逆势扭转乾坤。`
+                },
+                {
+                    summary: "逆风翻盘",
+                    match: ctx => ctx.maxFall < -10 && ctx.totalChange > 5,
+                    detail: ctx => `遭遇强风仍能翻盘，${ctx.maxFallAge}岁受挫但不失志，后续逐渐修复并取得领先。`
+                },
+                {
+                    summary: "厚积薄发",
+                    match: ctx => ctx.maxRiseAge > 60 && ctx.totalChange > 12,
+                    detail: ctx => `前半生积蓄能量，${ctx.maxRiseAge}岁后迎来爆发，后劲绵长，晚景可期。`
+                },
+                {
+                    summary: "晚来福厚",
+                    match: ctx => ctx.maxPriceAge > 75 && ctx.endPrice > ctx.midPrice,
+                    detail: ctx => `福泽在晚年聚拢，${ctx.maxPriceAge}岁运势登顶，属于后发而厚的稳福格局。`
+                },
+                {
+                    summary: "守成有道",
+                    match: ctx => Math.abs(ctx.totalChange) < 8 && ctx.avgVolatility < 3.5,
+                    detail: ctx => `走势平稳，起伏不大。守得住节奏便可安然前行，适合以稳为主，累积福气。`
+                },
+                {
+                    summary: "稳中求进",
+                    match: () => true,
+                    detail: ctx => `整体温和向前，${ctx.maxRiseAge}岁有阶段性提升，稳健中寻求增长，宜步步为营。`
                 }
-            }
+            ];
 
-            if (maxPriceAge > 80) {
-                detail += ` 难得的是晚年运势极佳，福泽深厚啊！`;
-            } else if (maxPriceAge < 30) {
-                detail += ` 少年成名，锐气十足。`;
-            }
+            const profile = profiles.find(item => item.match(context));
 
-            document.getElementById('evalSummary').innerText = `“${summary}”`;
-            document.getElementById('evalDetail').innerText = `“${detail}”`;
+            document.getElementById('evalSummary').innerText = `“${profile.summary}”`;
+            document.getElementById('evalDetail').innerText = `“${profile.detail(context)}”`;
         }
 
         function generateRealisticData() {
@@ -699,39 +747,93 @@
             let values = [];
             let annotations = [];
             let texts = [];
-            let price = 50;
+            let price = 52;
+            let changes = [];
+            let highs = [];
+            let lows = [];
+
+            const segments = [
+                { start: 0, end: 18, drift: -0.2, volatility: 2.6, eventBoost: -2.5 },
+                { start: 19, end: 35, drift: 0.8, volatility: 3.2, eventBoost: 3.5 },
+                { start: 36, end: 55, drift: 0.15, volatility: 2.4, eventBoost: 0.5 },
+                { start: 56, end: 75, drift: 0.5, volatility: 2.0, eventBoost: 2.8 },
+                { start: 76, end: 100, drift: -0.1, volatility: 1.8, eventBoost: 1.2 }
+            ];
+
+            let segmentIndex = 0;
 
             for (let i = 0; i <= 100; i++) {
                 years.push(i + "岁");
-                let change = (Math.random() - 0.45) * 8; 
-                if (i > 22 && i < 30) change += 2; 
-                if (i === 18) change = -5; 
-                if (i === 60) change = 5;  
+
+                if (i > segments[segmentIndex].end && segmentIndex < segments.length - 1) {
+                    segmentIndex += 1;
+                }
+
+                const segment = segments[segmentIndex];
+                let change = segment.drift + (Math.random() - 0.5) * segment.volatility;
+
+                if (i === segment.start + Math.floor((segment.end - segment.start) / 2)) {
+                    change += segment.eventBoost;
+                }
+
+                if (i === 28) change += 2.5;
+                if (i === 42) change -= 2.8;
+                if (i === 66) change += 2.2;
 
                 let open = price;
                 let close = price + change;
-                let low = Math.min(open, close) - Math.random() * 3;
-                let high = Math.max(open, close) + Math.random() * 3;
+                let low = Math.min(open, close) - (Math.random() * segment.volatility * 0.8 + 0.8);
+                let high = Math.max(open, close) + (Math.random() * segment.volatility * 0.8 + 0.8);
 
                 if (low < 10) { low = 10; close = 12; open = 11; }
 
                 values.push([open.toFixed(1), close.toFixed(1), low.toFixed(1), high.toFixed(1)]);
-                
-                if (change > 6) {
-                    annotations.push({ name: '大运', coord: [i, high], value: '大吉' });
-                    if (texts.length < 3) {
-                        texts.push({ text: i+'岁：鸿运当头', x: (i) + '%', y: '20%' });
-                    }
-                }
-                if (change < -5) {
-                    annotations.push({ name: '磨砺', coord: [i, low], value: '渡劫', itemStyle:{color:'#5470c6'} });
-                     if (texts.length < 3) {
-                        texts.push({ text: i+'岁：韬光养晦', x: (i) + '%', y: '80%' });
-                    }
-                }
+                changes.push(change);
+                highs.push(high);
+                lows.push(low);
 
                 price = close;
             }
+
+            const maxRise = Math.max(...changes);
+            const maxFall = Math.min(...changes);
+            const maxRiseIndex = changes.indexOf(maxRise);
+            const maxFallIndex = changes.indexOf(maxFall);
+            const maxHighIndex = highs.indexOf(Math.max(...highs));
+            const minLowIndex = lows.indexOf(Math.min(...lows));
+
+            const usedIndexes = new Set();
+            const addAnnotation = (index, label, value, color) => {
+                if (usedIndexes.has(index)) return;
+                usedIndexes.add(index);
+                const coordValue = label === '回撤' || label === '探底' ? lows[index] : highs[index];
+                const annotation = {
+                    name: label,
+                    coord: [index, coordValue],
+                    value: value
+                };
+                if (color) {
+                    annotation.itemStyle = { color };
+                }
+                annotations.push(annotation);
+            };
+
+            addAnnotation(maxRiseIndex, '破局', '跃升', '#f7d37a');
+            addAnnotation(maxFallIndex, '回撤', '警示', '#5470c6');
+            addAnnotation(maxHighIndex, '登顶', '巅峰', '#f0c46b');
+            addAnnotation(minLowIndex, '探底', '蓄势', '#3a5aa0');
+
+            if (annotations.length < 2) {
+                addAnnotation(30, '转机', '变势', '#f0c46b');
+                addAnnotation(70, '蜕变', '突破', '#f0c46b');
+            }
+
+            annotations.slice(0, 3).forEach((item) => {
+                const index = item.coord[0];
+                const y = ['回撤', '探底'].includes(item.name) ? '78%' : '18%';
+                texts.push({ text: `${index}岁：${item.name}`, x: `${index}%`, y });
+            });
+
             return { years, values, annotations, texts };
         }
 
