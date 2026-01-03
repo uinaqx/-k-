@@ -451,6 +451,153 @@
             color: #666;
             font-size: 0.8rem;
         }
+
+        /* --- Mobile Optimization --- */
+        @media (max-width: 768px) {
+            body, html {
+                overflow: hidden;
+            }
+
+            #scene {
+                perspective: 1400px;
+            }
+
+            .ring-container {
+                width: 360px;
+                height: 360px;
+            }
+
+            .card-3d {
+                width: 130px;
+                height: 190px;
+                margin-left: -65px;
+                margin-top: -95px;
+                font-size: 0.7rem;
+            }
+
+            .card-title {
+                font-size: 1rem;
+            }
+
+            .main-title {
+                font-size: 2.4rem;
+                letter-spacing: 6px;
+            }
+
+            .enter-btn {
+                padding: 12px 28px;
+                font-size: 1rem;
+            }
+
+            .input-container {
+                padding: 20px 16px;
+            }
+
+            .form-box {
+                width: min(92vw, 420px);
+                padding: 28px 22px;
+            }
+
+            .custom-input {
+                font-size: 1rem;
+                padding: 12px;
+            }
+
+            .gender-options {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .date-display {
+                flex-direction: column;
+            }
+
+            .date-box {
+                height: 44px;
+                font-size: 1rem;
+            }
+
+            .grid-panel {
+                width: min(92vw, 420px);
+            }
+
+            .grid-content {
+                grid-template-columns: repeat(4, 1fr);
+                max-height: 45vh;
+            }
+
+            .eval-box {
+                width: min(90vw, 420px);
+                padding: 28px 22px;
+            }
+
+            .eval-text-group {
+                font-size: 1rem;
+            }
+
+            .chart-wrapper {
+                padding: 20px 16px 30px;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .chart-header > div:last-child {
+                width: 100%;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .loading-title {
+                font-size: 1.8rem;
+                letter-spacing: 4px;
+            }
+
+            .loading-subtitle {
+                font-size: 0.75rem;
+                letter-spacing: 2px;
+            }
+
+            .loading-evidence,
+            .trend-preview {
+                width: 90%;
+                min-width: 0;
+            }
+
+            .trend-labels {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .ring-container {
+                width: 300px;
+                height: 300px;
+            }
+
+            .card-3d {
+                width: 110px;
+                height: 170px;
+                margin-left: -55px;
+                margin-top: -85px;
+            }
+
+            .main-title {
+                font-size: 2rem;
+                letter-spacing: 4px;
+            }
+
+            .enter-btn {
+                width: 100%;
+            }
+
+            .grid-content {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
     </style>
 </head>
 <body>
